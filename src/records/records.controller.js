@@ -37,7 +37,7 @@ async function list(req, res){
         }
     }
     let temp = [...mem.entries()].sort((a,b)=>a.player_score-b.player_score);
-    if(req.query.sort === 'decreasing') temp.reverse();
+    if(req.query.sort === 'increasing') temp.reverse();
     res.send(temp.map(([n,s])=>({player_name: n, player_score: s})));
 }
 
