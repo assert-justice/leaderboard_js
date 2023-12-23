@@ -27,7 +27,8 @@ async function hasPlayerData(req, res, next){
 }
 
 async function list(req, res){
-    const data = await listRecords(res.locals.game_id, req.query.sort);
+    const data = await listRecords(res.locals.game_id);
+    // filter out the duplicate names. todo: get better at sql
     const mem = new Map();
     for (const {player_name, player_score} of data) {
         if(!mem.has(player_name)) mem.set(player_name, 0);
@@ -35,11 +36,9 @@ async function list(req, res){
             mem.set(player_name, player_score);
         }
     }
-    res.send([...mem.entries()].sort((a,b)=>a.player_score-b.player_score).map(([n,s])=>({player_name: n, player_score: s})));
-    // filter out the duplicate names. todo: get better at sql
-    // res.send(data.filter((entry,idx)=>{
-    //     return idx === data.findIndex(ent=>ent.player_name === entry.player_name);
-    // }));
+    let temp = [...mem.entries()].sort((a,b)=>a.player_score-b.player_score);
+    if(req.query.sort === 'decreasing') temp.reverse();
+    res.send(temp.map(([n,s])=>({player_name: n, player_score: s})));
 }
 
 async function add(_, res){
