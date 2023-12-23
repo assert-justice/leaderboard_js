@@ -1,5 +1,5 @@
 const { getGame } = require('../games/games.service');
-const { listRecords, addRecord } = require("./records.service");
+const { listRecords, addRecord, getRecordByName, updateRecord } = require("./records.service");
 
 async function gameExists(req, res, next){
     const { game_id } = req.params;
@@ -27,13 +27,34 @@ async function hasPlayerData(req, res, next){
 }
 
 async function list(req, res){
-    res.send(await listRecords(res.locals.game_id, req.query.sort));
+    const data = await listRecords(res.locals.game_id, req.query.sort);
+    const mem = new Map();
+    for (const {player_name, player_score} of data) {
+        if(!mem.has(player_name)) mem.set(player_name, 0);
+        if(mem.get(player_name) < player_score){
+            mem.set(player_name, player_score);
+        }
+    }
+    res.send([...mem.entries()].sort((a,b)=>a.player_score-b.player_score).map(([n,s])=>({player_name: n, player_score: s})));
+    // filter out the duplicate names. todo: get better at sql
+    // res.send(data.filter((entry,idx)=>{
+    //     return idx === data.findIndex(ent=>ent.player_name === entry.player_name);
+    // }));
 }
 
 async function add(_, res){
     const {game_id, player_name, player_score} = res.locals;
     const data = await addRecord(game_id, player_name, player_score);
     res.send(data);
+    // const entry = await getRecordByName(player_name);
+    // if(entry){
+    //     const data = await updateRecord(game_id, entry.record_id, player_score);
+    //     res.send(data);
+    // }
+    // else{
+    //     const data = await addRecord(game_id, player_name, player_score);
+    //     res.send(data);
+    // }
 }
 
 module.exports = {
